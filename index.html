@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Демонстрація XSS та CSRF атак і захисту</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f4f4f4;
+        }
+
+        header {
+            background: #333;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+        }
+
+        nav {
+            background: #444;
+            padding: 10px;
+        }
+
+        nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        nav li {
+            margin: 0 15px;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+        }
+
+        section {
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            border-bottom: 2px solid #333;
+            padding-bottom: 5px;
+        }
+
+        .demo-section {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        .demo-section h3 {
+            margin-top: 0;
+        }
+
+        button {
+            margin: 5px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px;
+            background: #333;
+            color: #fff;
+        }
+
+        input[type="text"] {
+            width: 300px;
+            padding: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Демонстрація XSS та CSRF атак і захисту</h1>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="#introduction">Вступ</a></li>
+            <li><a href="#xss-demo">XSS</a></li>
+            <li><a href="#csrf-demo">CSRF</a></li>
+            <li><a href="#conclusion">Висновки</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <section id="introduction">
+            <h2>Вступ</h2>
+            <p>
+                Цей сайт демонструє практичні приклади атак XSS та CSRF (Cross-Site Request Forgery) і способи захисту
+                від них.
+                Ви зможете побачити, як можуть бути експлуатовані уразливості веб-додатків, а також які заходи
+                допомагають захистити систему.
+            </p>
+        </section>
+
+        <section id="xss-demo">
+            <h2>Міжсайтовий скриптинг (XSS)</h2>
+
+            У цьому розділі ми пояснимо, що таке міжсайтовий скриптинг (XSS), опишемо різні види уразливостей
+            міжсайтового скриптингу та розглянемо способи їх виявлення та запобігання.
+
+            <h3>Що таке міжсайтовий скриптинг (XSS)?</h3>
+
+            Міжсайтовий скриптинг (також відомий як XSS) — це вразливість безпеки веб-додатків, яка дозволяє зловмиснику
+            скомпрометувати взаємодію користувачів із вразливим додатком. XSS дозволяє зловмиснику обійти політику
+            однакового походження (same origin policy), яка призначена для розділення різних веб-сайтів один від одного.
+            Вразливості міжсайтового скриптингу зазвичай дозволяють зловмиснику видавати себе за жертву-користувача,
+            виконувати будь-які дії, які може виконати користувач, а також отримувати доступ до будь-яких даних
+            користувача. Якщо жертва має привілейований доступ у додатку, то зловмисник може отримати повний контроль
+            над усією функціональністю та даними додатку.
+
+            <h3>Як працює XSS?</h3>
+
+            Міжсайтовий скриптинг працює шляхом маніпулювання вразливим веб-сайтом таким чином, щоб він повертав
+            шкідливий JavaScript-код користувачам. Коли цей шкідливий код виконується в браузері жертви, зловмисник може
+            повністю скомпрометувати взаємодію користувача з додатком.
+
+            <h2>Демонстрація XSS атак</h2>
+            <div class="demo-section">
+                <h3>1. Приклад XSS вразливості</h3>
+                <p>Введіть текст нижче та натисніть "Відобразити вразливо" для демонстрації вразливого відображення:</p>
+                <!-- <img src="invalid.jpg" onerror="alert('XSS')"> -->
+                <!-- <div onclick="alert('XSS')">Click me</div> -->
+
+                <input type="text" id="xssInput"
+                    placeholder="Введіть текст, наприклад: &lt;img src=&quot;invalid.jpg&quot; onerror=&quot;alert('XSS')&quot;&gt;">
+                <br>
+                <button onclick="xssVulnerable()">Відобразити вразливо (innerHTML)</button>
+                <button onclick="xssSafe()">Відобразити безпечно (textContent)</button>
+                <div id="xssOutput" style="margin-top:20px; padding:10px; border:1px solid #ccc;"></div>
+            </div>
+            <h3>Детальний опис вразливості XSS</h3>
+            <p><strong>Як виникає ця вразливість?</strong><br>
+                Вразливість виникає через неправильну обробку та відображення введених користувачем даних на
+                веб-сторінці. Зокрема, уразливість з’являється тоді, коли дані, отримані від користувача, без належного
+                екранування (escaping) або перевірки безпосередньо відображаються на сторінці за допомогою методу
+                <code>innerHTML</code>.</p>
+
+            <h4>Приклад вразливого коду:</h4>
+            <pre>function xssVulnerable() {
+    var userInput = document.getElementById("xssInput").value;
+    document.getElementById("xssOutput").innerHTML = "Результат: " + userInput;}</pre>
+
+            <h4>Чому виникає вразливість?</h4>
+            <ul>
+                <li>Відсутність екранування (escaping) введених даних.</li>
+                <li>Надмірна довіра до введених даних.</li>
+                <li>Недостатнє використання безпечних методів відображення.</li>
+            </ul>
+
+            <h4>Наслідки вразливості</h4>
+            <ul>
+                <li>Викрадення сесійних даних або кукі користувача.</li>
+                <li>Перенаправлення користувача на шкідливий сайт.</li>
+                <li>Виконання дій від імені користувача.</li>
+                <li>Підробка інтерфейсу або контенту сторінки.</li>
+            </ul>
+
+            <h4>Як ми подолали вразливість?</h4>
+            <p>Ми використовуємо метод <code>textContent</code> замість <code>innerHTML</code>, що дозволяє безпечно
+                виводити текст без виконання скриптів.</p>
+
+            <h4>Безпечний код:</h4>
+            <pre>function xssSafe() {
+    var userInput = document.getElementById("xssInput").value;
+    document.getElementById("xssOutput").textContent = "Результат: " + userInput;
+}</pre>
+
+            <p>Метод <code>textContent</code> відображає текст без обробки як HTML-код, що гарантує захист від виконання
+                скриптів.</p>
+
+        </section>
+
+        <!-- CSRF Demonstration -->
+        <section id="csrf-demo">
+            <h2>Демонстрація CSRF атак</h2>
+
+            <!-- Vulnerable CSRF Demo -->
+            <div class="demo-section">
+                <h3>CSRF уразливий приклад</h3>
+                <p>Симуляція CSRF уразливості: натисніть кнопку для виконання дії без захисту.</p>
+                <p id="balanceDisplay">Баланс рахунку: $100</p>
+                <button onclick="vulnerableTransfer()">Виконати дію (перевід $10)</button>
+                <button onclick="simulateVulnerableCSRF()">Симулювати CSRF атаку</button>
+            </div>
+
+            <!-- Protected CSRF Demo -->
+            <div class="demo-section">
+                <h3>Захищений від CSRF приклад</h3>
+                <p>У цьому прикладі для виконання дії використовується CSRF-токен.</p>
+                <p>Ваш CSRF-токен: <span id="csrfTokenDisplay"></span></p>
+                <form id="csrfForm" onsubmit="handleProtectedSubmit(event)">
+                    <input type="hidden" id="csrfTokenInput" name="csrfToken" value="">
+                    <button type="submit">Виконати захищену дію (перевід $10)</button>
+                </form>
+                <button onclick="simulateProtectedCSRFAttack()">Симулювати CSRF атаку (без правильного токена)</button>
+            </div>
+            <p>
+                Захищений метод перевіряє CSRF-токен перед виконанням дії. Якщо токен не співпадає, дія блокується.
+            </p>
+        </section>
+
+        <!-- Conclusion -->
+        <section id="conclusion">
+            <h2>Висновки</h2>
+            <p>
+                Демонстрації показали, як XSS атаки можуть виконуватися за рахунок невірного відображення введених
+                даних, а також як CSRF атаки можуть здійснюватися через небезпечні форми.
+                Використання відповідних заходів захисту, таких як екранізація даних та використання CSRF-токенів,
+                значно знижує ризики.
+            </p>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Демонстрація безпеки веб-додатків</p>
+    </footer>
+
+    <script>
+        // ----- XSS Demo Functions -----
+        // Уразливий метод відображення
+        function xssVulnerable() {
+            var userInput = document.getElementById("xssInput").value;
+            // Використання innerHTML - небезпечний підхід
+            document.getElementById("xssOutput").innerHTML = "Результат: " + userInput;
+        }
+
+
+        function xssSafe() {
+            var userInput = document.getElementById("xssInput").value;
+            // Safe: using textContent, which escapes HTML/JS code
+            document.getElementById("xssOutput").textContent = userInput;
+        }
+
+        // ----- CSRF Demo Functions -----
+        var balance = 100;
+
+        function updateBalanceDisplay() {
+            document.getElementById("balanceDisplay").innerText = "Баланс рахунку: $" + balance;
+        }
+
+        function vulnerableTransfer() {
+            balance -= 10;
+            updateBalanceDisplay();
+            alert("Уразлива дія виконана: $10 списано.");
+        }
+
+        function simulateVulnerableCSRF() {
+            // Simulate a CSRF attack by automatically calling the vulnerable function
+            vulnerableTransfer();
+        }
+
+        // Generate a CSRF token for the protected demo
+        var csrfToken = Math.random().toString(36).substring(2);
+
+        function handleProtectedSubmit(event) {
+            event.preventDefault();
+            var tokenInput = document.getElementById("csrfTokenInput").value;
+            if (tokenInput === csrfToken) {
+                balance -= 10;
+                updateBalanceDisplay();
+                alert("Захищена дія виконана успішно!");
+            } else {
+                alert("Помилка: CSRF-токен не співпадає. Дія заблокована.");
+            }
+        }
+
+        function simulateProtectedCSRFAttack() {
+            // Simulate a malicious CSRF attack by submitting the form with an incorrect token
+            handleProtectedSubmit({
+                preventDefault: function () { },
+                target: { csrfTokenInput: { value: "wrongtoken" } }
+            });
+        }
+
+        // On page load, set the CSRF token in the form and update the balance display
+        window.onload = function () {
+            updateBalanceDisplay();
+            document.getElementById("csrfTokenInput").value = csrfToken;
+            document.getElementById("csrfTokenDisplay").innerText = csrfToken;
+        }
+    </script>
+</body>
+
+</html>
