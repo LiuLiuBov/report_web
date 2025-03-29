@@ -32,3 +32,9 @@ app.post('/comments', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
+
+// Reflected XSS via URL parameter
+app.get('/reflected', (req, res) => {
+    const userInput = req.query.input;
+    res.send(`<h1>Reflected XSS Example</h1><p>${userInput}</p>`);
+});
