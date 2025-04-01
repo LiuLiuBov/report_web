@@ -391,23 +391,92 @@ function domXssDemo() {
             <p>
                 Дозволяти користувачам розміщувати HTML-розмітку слід уникати за можливості, але іноді це необхідно (наприклад, у блогах або форумах). Використовуйте бібліотеки на кшталт DOMPurify для безпечної фільтрації HTML.
             </p>
-        </section>        
-        
+        </section>
+        <section id="csrf-introduction">
+            <h2>Що таке CSRF (Cross-Site Request Forgery)?</h2>
+            <p>
+                CSRF (Cross-Site Request Forgery) — це вразливість безпеки веб-додатків, яка дозволяє зловмисникам змусити
+                користувача виконати небажану дію на веб-сайті, на якому цей користувач аутентифікований. Зловмисник
+                може виконати цю атаку, підробивши запит від імені жертви, наприклад, через посилання або форму.
+            </p>
 
-        <!-- CSRF Demonstration -->
+            <h3>Як працює CSRF атака?</h3>
+            <p>
+                Коли користувач аутентифікований на веб-сайті, він зазвичай має активну сесію, що підтверджує його
+                ідентичність (наприклад, через cookies або сесійні токени). CSRF атака працює таким чином:
+            </p>
+            <ul>
+                <li>Користувач заходить на шкідливий веб-сайт, підготовлений зловмисником.</li>
+                <li>На цьому сайті міститься код (наприклад, форма або зображення), який відправляє запит на веб-сайт, де
+                    користувач аутентифікований.</li>
+                <li>Цей запит виглядає так, ніби він був відправлений користувачем, хоча насправді це було зроблено без
+                    його відома.</li>
+                <li>Запит може містити важливі дії, такі як переведення грошей, зміну пароля, видалення даних тощо.</li>
+            </ul>
+            <p>
+                CSRF атака може бути дуже небезпечною, оскільки вона використовує довіру сайту до користувача, а не довіру
+                користувача до сайту.
+            </p>
+
+            <h3>Приклад CSRF атаки</h3>
+            <p>
+                Уявімо, що користувач має активний сеанс на банківському сайті, який дозволяє переказувати гроші через
+                просту HTTP форму. Зловмисник може створити веб-сторінку, яка автоматично відправить POST-запит на банківський
+                сайт для переведення коштів на рахунок зловмисника:
+            </p>
+            <pre>
+                &lt;form action="http://bank.com/transfer" method="POST"&gt;
+                    &lt;input type="hidden" name="amount" value="1000"&gt;
+                    &lt;input type="hidden" name="toAccount" value="attackerAccount"&gt;
+                    &lt;/form&gt;
+                &lt;script&gt;document.forms[0].submit();&lt;/script&gt;
+            </pre>
+            <p>
+                Коли користувач відвідає шкідливу сторінку, форма автоматично відправляється на банківський сайт, і
+                переказ буде виконано з його рахунку без його відома.
+            </p>
+        </section>
+
         <section id="csrf-demo">
             <h2>Демонстрація CSRF атак</h2>
 
-            <!-- Vulnerable CSRF Demo -->
+            <!-- Приклад 1: CSRF уразливий приклад -->
             <div class="demo-section">
-                <h3>CSRF уразливий приклад</h3>
+                <h3>1. CSRF уразливий приклад</h3>
                 <p>Симуляція CSRF уразливості: натисніть кнопку для виконання дії без захисту.</p>
-                <p id="balanceDisplay">Баланс рахунку: $100</p>
-                <button onclick="vulnerableTransfer()">Виконати дію (перевід $10)</button>
-                <button onclick="simulateVulnerableCSRF()">Симулювати CSRF атаку</button>
+                <p id="balanceDisplay1">Баланс рахунку: $100</p>
+                <button onclick="vulnerableTransfer(1)">Виконати дію (перевід $10)</button>
+                <button onclick="simulateVulnerableCSRF(1)">Симулювати CSRF атаку</button>
             </div>
 
-            <!-- Protected CSRF Demo -->
+            <!-- Приклад 2: CSRF без перевірки методу POST -->
+            <div class="demo-section">
+                <h3>2. CSRF без перевірки методу POST</h3>
+                <p>Використання методу GET замість POST для операцій з боку сервера.</p>
+                <button onclick="simulatePostWithoutVerification()">Симулювати CSRF (GET замість POST)</button>
+            </div>
+
+            <!-- Приклад 3: CSRF через автоматичні запити за допомогою JavaScript -->
+            <div class="demo-section">
+                <h3>3. CSRF через автоматичні запити</h3>
+                <p>Запит може бути автоматично надісланий через JavaScript без участі користувача.</p>
+                <button onclick="simulateJavaScriptCSRF()">Симулювати автоматичний запит</button>
+            </div>
+
+            <!-- Приклад 4: CSRF з використанням шкідливих зображень -->
+            <div class="demo-section">
+                <h3>4. CSRF через шкідливі зображення</h3>
+                <p>Шкідливі зображення можуть викликати небажані запити без участі користувача.</p>
+                <button onclick="simulateImageCSRF()">Симулювати CSRF через зображення</button>
+            </div>
+
+            <!-- Приклад 5: CSRF з використанням вбудованої форми -->
+            <div class="demo-section">
+                <h3>5. CSRF через вбудовану форму</h3>
+                <p>Форма може автоматично надсилати запит на зміну даних без участі користувача.</p>
+                <button onclick="simulateEmbeddedFormCSRF()">Симулювати CSRF через форму</button>
+            </div>
+            <!-- Захищений від CSRF приклад -->
             <div class="demo-section">
                 <h3>Захищений від CSRF приклад</h3>
                 <p>У цьому прикладі для виконання дії використовується CSRF-токен.</p>
@@ -418,10 +487,42 @@ function domXssDemo() {
                 </form>
                 <button onclick="simulateProtectedCSRFAttack()">Симулювати CSRF атаку (без правильного токена)</button>
             </div>
+
             <p>
                 Захищений метод перевіряє CSRF-токен перед виконанням дії. Якщо токен не співпадає, дія блокується.
             </p>
         </section>
+
+        <section id="csrf-conclusion">
+            <h2>Висновки до розділу CSRF</h2>
+
+            <p>
+                CSRF (Cross-Site Request Forgery) — це небезпечна вразливість, яка експлуатує довіру веб-додатку до автентифікованого користувача. 
+                Через неї зловмисник може виконувати несанкціоновані дії від імені користувача без його відома, що може призвести до втрати коштів, 
+                зміни особистих даних або інших небажаних наслідків.
+            </p>
+
+            <p><strong>Основні висновки:</strong></p>
+            <ul>
+                <li>CSRF працює, коли браузер автоматично додає кукі до запитів, навіть якщо користувач не взаємодіє із сайтом напряму.</li>
+                <li>Атака може бути здійснена через приховану форму, скрипт, зображення або iframe, вбудовані на шкідливому сайті.</li>
+                <li>Відсутність перевірки автентичності запиту на сервері створює умови для атаки.</li>
+            </ul>
+
+            <p><strong>Методи захисту:</strong></p>
+            <ul>
+                <li>Використання <strong>унікального CSRF-токена</strong> у формах та запитах, який перевіряється на сервері.</li>
+                <li>Перевірка HTTP-методу: <code>GET</code> не повинен змінювати дані, всі критичні дії мають виконуватись через <code>POST</code>, <code>PUT</code> або <code>DELETE</code>.</li>
+                <li>Застосування атрибуту <code>SameSite</code> до кукі для обмеження їх автоматичної відправки.</li>
+                <li>Аутентифікація через заголовки (наприклад, використання JWT у <code>Authorization</code>), які не додаються автоматично браузером.</li>
+            </ul>
+
+            <p>
+                Захист від CSRF є критично важливим аспектом безпеки веб-додатків. Просте впровадження CSRF-токена може надійно запобігти атакам 
+                і зберегти довіру користувачів до вашого ресурсу.
+            </p>
+        </section> 
+
 
         <!-- Conclusion -->
         <section id="conclusion">
@@ -451,48 +552,85 @@ function domXssDemo() {
             document.getElementById("xssOutput").textContent = userInput;
         }
 
-        var balance = 100;
+        var balance1 = 100;
 
-        function updateBalanceDisplay() {
-            document.getElementById("balanceDisplay").innerText = "Баланс рахунку: $" + balance;
+        function updateBalanceDisplay(id) {
+            document.getElementById(`balanceDisplay${id}`).innerText = `Баланс рахунку: $${balance1}`;
         }
 
-        function vulnerableTransfer() {
-            balance -= 10;
-            updateBalanceDisplay();
+        // Приклад 1: Уразлива функція для переведення грошей
+        function vulnerableTransfer(id) {
+            balance1 -= 10;
+            updateBalanceDisplay(id);
             alert("Уразлива дія виконана: $10 списано.");
         }
 
-        function simulateVulnerableCSRF() {
-            vulnerableTransfer();
+        // Симуляція CSRF атаки
+        function simulateVulnerableCSRF(id) {
+            vulnerableTransfer(id);
         }
 
-        var csrfToken = Math.random().toString(36).substring(2);
+        // Приклад 2: CSRF без перевірки методу POST
+        function simulatePostWithoutVerification() {
+            // Симулюємо запит, що використовується для зміни даних
+            alert("Запит на сервер був надісланий через GET замість POST. Це небезпечно!");
+        }
+
+        // Приклад 3: CSRF через автоматичні запити за допомогою JavaScript
+        function simulateJavaScriptCSRF() {
+            // Створення автоматичного запиту для зміни даних
+            alert("Автоматичний запит надіслано через JavaScript (без участі користувача).");
+        }
+
+        // Приклад 4: CSRF через шкідливі зображення
+        function simulateImageCSRF() {
+            // Симулюємо автоматичний запит через тег <img>
+            const img = new Image();
+            img.src = "http://attacker.com/transfer?amount=1000";
+            alert("Шкідливе зображення спробує виконати CSRF атаку.");
+        }
+
+        // Приклад 5: CSRF через вбудовану форму
+        function simulateEmbeddedFormCSRF() {
+            // Симулюємо відправку форми без відома користувача
+            const form = document.createElement("form");
+            form.action = "http://bank.com/transfer";
+            form.method = "POST";
+            form.innerHTML = '<input type="hidden" name="amount" value="1000"><input type="hidden" name="toAccount" value="attackerAccount">';
+            document.body.appendChild(form);
+            form.submit();
+            alert("Форма автоматично надіслала CSRF запит.");
+        }
+
+        var csrfToken = Math.random().toString(36).substring(2); // Генерація CSRF токена
 
         function handleProtectedSubmit(event) {
-            event.preventDefault();
+            event.preventDefault(); // Запобігаємо стандартній поведінці форми
             var tokenInput = document.getElementById("csrfTokenInput").value;
             if (tokenInput === csrfToken) {
-                balance -= 10;
-                updateBalanceDisplay();
+                balance1 -= 10;
+                updateBalanceDisplay(1);
                 alert("Захищена дія виконана успішно!");
             } else {
                 alert("Помилка: CSRF-токен не співпадає. Дія заблокована.");
             }
         }
 
+        // Симуляція атаки без правильного токена
         function simulateProtectedCSRFAttack() {
             handleProtectedSubmit({
-                preventDefault: function () { },
+                preventDefault: function () {},
                 target: { csrfTokenInput: { value: "wrongtoken" } }
             });
         }
 
+        // Завантаження CSRF токену на сторінку
         window.onload = function () {
-            updateBalanceDisplay();
+            updateBalanceDisplay(1);
             document.getElementById("csrfTokenInput").value = csrfToken;
             document.getElementById("csrfTokenDisplay").innerText = csrfToken;
         }
+
 
         var comments = [];
 
